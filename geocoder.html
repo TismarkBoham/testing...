@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 1 — Geocoder</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 60px auto; padding: 0 24px; }
+  input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  button { margin-top: 10px; width: 100%; padding: 10px; font-size: 16px; background: #2d6e45; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  button:hover { background: #235536; }
+  #result { margin-top: 24px; padding: 16px; background: #f4f4f4; border-radius: 6px; display: none; }
+  #result p { margin: 4px 0; font-size: 15px; }
+  #result .coords { font-size: 22px; font-weight: bold; margin: 10px 0; }
+  #error { color: red; margin-top: 12px; display: none; }
+</style>
+</head>
+<body>
+
+<h2>Step 1 — Geocoder</h2>
+<p>Enter an address or zip code to get its coordinates.</p>
+
+<input type="text" id="address" placeholder="e.g. 123 Maple St, Ithaca NY or 14850" />
+<button onclick="lookup()">Get coordinates</button>
+<div id="error"></div>
+
+<div id="result">
+  <p id="display-name" style="color:#555; font-size:13px"></p>
+  <div class="coords">
+    <span id="lat"></span>, <span id="lon"></span>
+  </div>
+  <p style="font-size:12px; color:#888">latitude, longitude</p>
+</div>
+
+<script>
+async function lookup() {
+  var addr = document.getElementById('address').value.trim();
+  var errEl = document.getElementById('error');
+  var resEl = document.getElementById('result');
+  errEl.style.display = 'none';
+  resEl.style.display = 'none';
+
+  if (!addr) { errEl.textContent = 'Please enter an address.'; errEl.style.display = 'block'; return; }
+
+  var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(addr) + '&format=json&limit=1';
+  try {
+    var res  = await fetch(url, { headers: { 'User-Agent': 'PolylawnGeocoder/1.0' } });
+    var data = await res.json();
+    if (!data || !data[0]) { errEl.textContent = 'Address not found. Try being more specific.'; errEl.style.display = 'block'; return; }
+    document.getElementById('display-name').textContent = data[0].display_name;
+    document.getElementById('lat').textContent = parseFloat(data[0].lat).toFixed(6);
+    document.getElementById('lon').textContent = parseFloat(data[0].lon).toFixed(6);
+    resEl.style.display = 'block';
+  } catch(e) {
+    errEl.textContent = 'Network error — check your connection.';
+    errEl.style.display = 'block';
+  }
+}
+
+document.getElementById('address').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') lookup();
+});
+</script>
+</body>
+</html>
